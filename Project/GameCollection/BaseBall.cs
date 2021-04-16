@@ -8,25 +8,25 @@ namespace GameCollection
     {
         public enum LEVEL
         {
-            Easy,
+            Easy = 3,
             Normal,
             Hard
         }
-        public enum MODE
-        {
-            Solo,
-            vsAI
-        }
         public LEVEL level { get; private set; }
-        public MODE mode { get; private set; }
-        public int AInumber { get; private set; }
-        public List<Tuple<int, string>> AItry;
-        public int MYnumber { get; private set; }
-        public List<Tuple<int, string>> Mytry;
+        public int[] AInumber { get; private set; }
+        public List<Tuple<int[], string>> Mytry;
 
         public int Chances { get; private set; }
 
-        public int Lobby()
+        public void Run()
+        {
+            while (this.Lobby() != 3) // 3 means EXIT the game
+            {
+                Initialize();
+                Play();
+            }
+        }
+        private int Lobby()
         {
             string menu = null;
             while(menu != "1" && menu != "3")
@@ -42,7 +42,7 @@ namespace GameCollection
 
             return Convert.ToInt32(menu);
         }
-        public void HowToPlay()
+        private void HowToPlay()
         {
             Console.WriteLine("### WELCOME TO BASEBALL GAME ###");
             Console.WriteLine("BASEBALL GAME is 3 numbers guessing game. Your opposite will have a set of 3 numbers.");
@@ -67,31 +67,18 @@ namespace GameCollection
             Console.ReadLine();
             Console.Clear();
         }
-        public void Initialize()
+        private void Initialize()
         {
             Console.Clear(); // Get ready for the Console to run the game
-            string _mode = null;
-            while (_mode != "1" && _mode != "2")
-            {
-                Console.WriteLine("1. Solo");
-                Console.WriteLine("2. vs AI");
-                Console.Write("Select a mode: ");
-                _mode = Console.ReadLine();
-                Console.Clear();
-            }
-
-            if (_mode == "1") 
-                mode = MODE.Solo;
-            else 
-                mode = MODE.vsAI;
 
             string lev = null;
             while (lev != "1" && lev != "2" && lev != "3")
             {
-                Console.WriteLine("1. Easy");
-                Console.WriteLine("2. Normal");
-                Console.WriteLine("3. Hard");
-                Console.Write("Select a level: ");
+                Console.WriteLine("### WELCOME TO BASEBALL GAME ###");
+                Console.WriteLine("### 1. Easy                  ###");
+                Console.WriteLine("### 2. Normal                ###");
+                Console.WriteLine("### 3. Hard                  ###");
+                Console.Write("### Select a level: ");
                 lev = Console.ReadLine();
                 Console.Clear();
             }
@@ -106,152 +93,205 @@ namespace GameCollection
             switch(level)
             {
                 case LEVEL.Easy:
-                    Chances = 12;
+                    Chances = 10;
                     break;
                 case LEVEL.Normal:
-                    Chances = 9;
+                    Chances = 12;
                     break;
                 case LEVEL.Hard:
-                    Chances = 6;
+                    Chances = 15;
                     break;
             }
 
-            AInumber = GenerateNumber();
-            if (mode == MODE.vsAI) MYnumber = GenerateNumber();
+            GenerateNumber();
         }
 
-        public int GenerateNumber()
+        private void Play()
         {
-            int first = 0, second = 0, third = 0;
-            Random rand = new Random();
-            // first digit
-            first = rand.Next(1, 10);
-
-            // second digit
-            second = rand.Next(1, 10);
-            while (second == first)
-                second = rand.Next(1, 10);
-
-            // third digit
-            third = rand.Next(1, 10);
-            while (third == first || third == second) 
-                third = rand.Next(1, 10);
-
-            return first + second * 10 + third * 100;
-        }
-
-        public void SoloPlay()
-        {
-            Mytry = new List<Tuple<int, string>>();
+            Mytry = new List<Tuple<int[], string>>();
 
             while (Chances > 0)
             {
-                int guess = 0;
-                
+                int[] guess = new int[AInumber.Length];
+
                 Console.Clear();
                 GuessHistory();
                 Console.WriteLine();
-                
+
                 guess = GuessInput();
 
-                if (guess != AInumber)
+
+                Mytry.Add(GetResultOfGuess(guess));
+
+                if(Mytry[Mytry.Count-1].Item2 == "A")
                 {
-                    Mytry.Add(GetResultOfGuess(guess));
-                }
-                else
-                {
-                    Console.WriteLine("Correct! The answer was {0}", guess);
+                    Console.Write("Correct! The answer was ");
+                    foreach (int n in AInumber)
+                        Console.Write(n);
+                    Console.WriteLine();
                     Console.ReadLine();
                     break;
                 }
 
                 Chances--;
-                if(Chances == 0)
+                if (Chances == 0)
                 {
-                    Console.WriteLine("You are out of all chances ): The answer was {0}", guess);
+                    Console.Write("You are out of all chances ): The answer was ");
+                    foreach (int n in AInumber)
+                        Console.Write(n);
+                    Console.WriteLine();
                     Console.ReadLine();
                 }
             }
             Console.Clear();
         }
 
-        public int GuessInput()
+        private void GenerateNumber()
         {
-            int num = 0;
-            while (num == 0)
+            AInumber = new int[(int)level];
+
+            Random rand = new Random();
+            AInumber[0] = rand.Next(1, 10);
+            int i = 1;
+            while(i < AInumber.Length)
             {
-                Console.Write($"Guess the number!: ");
+                bool diff = false;
+                int _nextNum = rand.Next(1, 10);
+                for (int j = 0; j < i; j++)
+                {
+                    if (_nextNum == AInumber[j])
+                    {
+                        diff = true;
+                        break;
+                    }
+                }
+                if (diff) continue;
+                
+                AInumber[i++] = _nextNum;
+                
+            }
+        }
+
+        private int[] GuessInput()
+        {
+            int input = 0;
+            int[] num = new int[AInumber.Length];
+            while (input == 0)
+            {
+                Console.Write("Guess the number: ");
                 try
                 {
-                    num = Convert.ToInt32(Console.ReadLine());
+                    input = Convert.ToInt32(Console.ReadLine());
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Only a set of 3 numbers is valid.");
+                    Console.WriteLine(e.ToString()); 
+                    Console.WriteLine($"Only a set of {(int)level} numbers is valid.");
                     Console.ReadLine();
                     //Console.Clear();
                     continue;
                 }
 
-                if (num < 99 || num > 999)
+                if (input < Math.Pow(10, AInumber.Length - 1) || input >= Math.Pow(10, AInumber.Length)) // Math.Pow is to calcuate square of a number
                 {
-                    Console.WriteLine("Must be a set of 3 numbers.");
+                    Console.WriteLine($"Must be a set of {(int)level} numbers.");
                     Console.ReadLine();
                     //Console.Clear();
-                    num = 0;
+                    input = 0;
                     continue;
                 }
 
-                int _first = num % 10;
-                int _third = num / 100;
-                int _second = (num - (_third * 100)) / 10;
-                if (_first == _second || _first == _third || _second == _third)
+                num = ArrangeNumber(input);
+
+                bool valid = true;
+                for (int i = 0; i < num.Length; i++)
+                {
+                    for(int j = i+1; j < num.Length; j++)
+                    {
+                        if (num[i] == num[j]) valid = false;
+                    }
+                    if (!valid) break;
+                }
+
+                if (!valid)
                 {
                     Console.WriteLine("The each number must be a different number.");
                     Console.ReadLine();
                     //Console.Clear();
-                    num = 0;
+                    num = null;
+                    input = 0;
                     continue;
                 }
             }
 
             return num;
         }
-        public Tuple<int, string> GetResultOfGuess(int guess)
+
+        private int[] ArrangeNumber(int input)
         {
-            int my_first = guess % 10;
-            int my_third = guess / 100;
-            int my_second = (guess - (my_third * 100)) / 10;
+            int[] num = new int[AInumber.Length];
 
-            int a_first = AInumber % 10;
-            int a_third = AInumber / 100;
-            int a_second = (AInumber - (a_third * 100)) / 10;
+            int divide = (int)Math.Pow(10, AInumber.Length-1);
+            num[0] = input / divide;
+            for(int i = 1; i < num.Length; i++)
+            {
+                divide /= 10;
+                num[i] = input / divide % 10;
+            }
 
+            //num[0] = input / 10000 % 1;
+            //num[1] = input / 1000 % 10;
+            //num[2] = input / 100 % 10;
+            //num[3] = input / 10 % 10;
+            //num[4] = input / 1 % 10;
+
+            //num[0] = input / 100 % 1;
+            //num[1] = input / 10 % 10;
+            //num[2] = input / 1 % 10; // 제일 앞자리만 divide % 1, 그 외 모두 divide*10씩 커지는 값으로 나누고 %10
+
+            return num;
+        }
+        private Tuple<int[], string> GetResultOfGuess(int[] guess)
+        {
             int strike = 0, ball = 0;
-            if (my_first == a_first) strike++;
-            if (my_third == a_third) strike++;
-            if (my_second == a_second) strike++;
 
-            if (my_first == a_third || my_first == a_second) ball++;
-            if (my_second == a_first || my_second == a_third) ball++;
-            if (my_third == a_first || my_third == a_second) ball++;
-
-            if(strike == 0 && ball == 0)
+            for(int i = 0; i < AInumber.Length; i++)
+            {
+                if (AInumber[i] == guess[i]) strike++;
+                for(int j = 0; j < guess.Length; j++)
+                {
+                    if (i == j) continue;
+                    if (AInumber[i] == guess[j]) ball++;
+                }
+            }
+            if (strike == 4)
+                return Tuple.Create(guess, "A");
+            else if (strike == 0 && ball == 0)
                 return Tuple.Create(guess, "OUT ");
             else
                 return Tuple.Create(guess, $"{strike}S{ball}B");
         }
 
-        public void GuessHistory()
+        private void GuessHistory()
         {
             
             Console.WriteLine("# # # Guess History # # #");
             if(Mytry.Count == 0)
-                Console.WriteLine("#   Result shown here   #");
+                Console.WriteLine("#   Results show here   #");
             else
             {
-                Console.WriteLine("# == Number = Result == #");
-                Mytry.ForEach(guess => Console.WriteLine($"#     {guess.Item1}      {guess.Item2}     #"));
+                Console.WriteLine("# == Number | Result == #");
+                //Mytry.ForEach(guess => Console.WriteLine($"#     {guess.Item1}      {guess.Item2}     #"));
+
+                for (int i = 0; i < Mytry.Count; i++)
+                {
+                    Console.Write("      ");
+                    int[] guess = Mytry[i].Item1;
+                    
+                    foreach (int n in guess) 
+                        Console.Write(n);
+                    Console.WriteLine($"     {Mytry[i].Item2}      ");
+                }
             }
 
             Console.WriteLine("# # # # # # # # # # # # #");

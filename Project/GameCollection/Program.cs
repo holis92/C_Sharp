@@ -8,19 +8,8 @@ namespace GameCollection
         {
             // public void Launch() {
             BaseBall baseball = new BaseBall();
-            while (baseball.Lobby() != 3) // 3 means EXIT the game
-            {
-                baseball.Initialize();
-                if (baseball.mode == BaseBall.MODE.Solo)
-                {
-                    baseball.SoloPlay();
-                }
-                else
-                {
-                    //baseball.vsAIPlay();
-                }
-            }
-            // }
+            baseball.Run();
+            //}
         }
     }
 }
